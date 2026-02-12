@@ -9,3 +9,6 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    ignore:
+      - dependency-name: "php"
+        versions: ["8.3.x", "8.4.x", "8.5.x"]
