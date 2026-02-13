@@ -44,6 +44,32 @@ services:
 
 Place your source files (PHP, configs, assets) under `www`, mirror `public` if you use a framework, and commit the folder to your project if needed. Compose will keep them in sync with the container.
 
+## Dockhand stack example
+
+If you manage services with Dockhand, here is an `stack.yml` snippet that mirrors the standard Compose setup but names the service `web` and keeps assets in a named `html` volume. It exposes the container on port 8000 and maintains a healthcheck to ensure Apache is running.
+
+```yaml
+services:
+  web:
+    container_name: webserver
+    image: ghcr.io/wikibear/fullyws:8.2
+    hostname: webserver
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - html:/var/www/html
+    healthcheck:
+      test: ["CMD-SHELL", "pidof apache2 > /dev/null || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  html:
+```
+
 ## License
 
 All base images reuse the same licensing as the upstream `php:*` variants (PHP License v3.01). See https://www.php.net/license/3_01.txt for the full text and the Docker Library [PHP README](https://github.com/docker-library/docs/blob/master/php/README.md#license) for how the project tracks additional dependencies.
