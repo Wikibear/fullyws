@@ -1,4 +1,4 @@
-# PHP Apache Matrix
+# FullyWS - Full Webserver
 
 Minimal PHP 8.2 / 8.3 / 8.5 Apache base images with GD, Redis, Imagick and tuned PHP defaults. Each version lives under `images/<version>/Dockerfile` so GHCR tags can be rebuilt independently.
 
