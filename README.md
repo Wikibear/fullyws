@@ -1,6 +1,6 @@
 # FullyWS - Full Webserver
 
-Minimal PHP 8.2 / 8.3 / 8.5 Apache base images with GD, Redis, Imagick and tuned PHP defaults. Each version lives under `images/<version>/Dockerfile` so GHCR tags can be rebuilt independently.
+FullyWS packages PHP 8.2 / 8.3 / 8.5 Apache images that are beefed up for larger web-hosting projects (GD, Redis, Imagick, OPcache, extra extensions and tuned defaults). Each version lives under `images/<version>/Dockerfile` so GHCR tags can be rebuilt independently.
 
 ## Upstream PHP tags
 
