@@ -5,7 +5,7 @@ FullyWS packages PHP 8.2 / 8.3 / 8.5 Apache images that are beefed up for larger
 ## Extras included in every build
 
 - Debian tooling for building PHP extensions (`git`, `unzip`, `libzip`, `libjpeg62-turbo`, `libpng`, `libfreetype6`, `libonig`, `libxml2`, `libssl`, `libicu`, `libmagickwand`, `libcurl4-openssl`, `pkg-config`).
-- Compiled-in PHP extensions: `gd` (with JPEG + Freetype), `mysqli`, `pdo`, `pdo_mysql`, `intl`, `zip`, `bcmath`, `soap`, `xml`, `mbstring`, `exif`, and `opcache` where upstream images allow it.
+- Compiled-in PHP extensions: `gd` (with JPEG + Freetype), `mysqli`, `pdo`, `pdo_mysql`, `intl`, `zip`, `bcmath`, `soap`, `xml`, `mbstring`, `exif`, plus `opcache` (built manually in `8.2`/`8.3` while inherited from the upstream `php:8.5-apache` image for `8.5`).
 - PECL modules: `redis` and `imagick` with corresponding `docker-php-ext-enable` (plus cleanup of `/tmp/pear`).
 - OPcache tuning (`memory_consumption`, `interned_strings_buffer`, `max_accelerated_files`, `revalidate_freq`, `fast_shutdown`, `enable_cli`).
 - Custom PHP defaults (`memory_limit=256M`, `upload_max_filesize=64M`, `post_max_size=64M`, `max_execution_time=300`).
