@@ -12,6 +12,25 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        include:
+          - version: 8.2
+            path: images/8.2
+            tags: |
+              ghcr.io/wikibear/fullyws:8.2
+              ghcr.io/wikibear/fullyws:8.2-${{ github.sha }}
+          - version: 8.3
+            path: images/8.3
+            tags: |
+              ghcr.io/wikibear/fullyws:8.3
+              ghcr.io/wikibear/fullyws:8.3-${{ github.sha }}
+          - version: 8.5
+            path: images/8.5
+            tags: |
+              ghcr.io/wikibear/fullyws:8.5
+              ghcr.io/wikibear/fullyws:8.5-${{ github.sha }}
+              ghcr.io/wikibear/fullyws:latest
 
     steps:
       - name: Checkout Code
@@ -24,11 +43,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build und Push
+      - name: Build und Push (PHP ${{ matrix.version }})
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ${{ matrix.path }}
           push: true
-          tags: |
-            ghcr.io/wikibear/fullyws:latest
-            ghcr.io/wikibear/fullyws:${{ github.sha }}
+          tags: ${{ matrix.tags }}
