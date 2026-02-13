@@ -1,6 +1,15 @@
 # FullyWS - Full Webserver
 
-FullyWS packages PHP 8.2 / 8.3 / 8.5 Apache images that are beefed up for larger web-hosting projects (GD, Redis, Imagick, OPcache, extra extensions and tuned defaults). Each version lives under `images/<version>/Dockerfile` so GHCR tags can be rebuilt independently.
+FullyWS packages PHP 8.2 / 8.3 / 8.5 Apache images that are beefed up for larger web-hosting projects: GD, Redis, Imagick, OPcache, extra extensions, tuned defaults, and the system tooling needed to compile them. Each version lives under `images/<version>/Dockerfile` so GHCR tags can be rebuilt independently.
+
+## Extras included in every build
+
+- Debian tooling for building PHP extensions (`git`, `unzip`, `libzip`, `libjpeg62-turbo`, `libpng`, `libfreetype6`, `libonig`, `libxml2`, `libssl`, `libicu`, `libmagickwand`, `libcurl4-openssl`, `pkg-config`).
+- Compiled-in PHP extensions: `gd` (with JPEG + Freetype), `mysqli`, `pdo`, `pdo_mysql`, `intl`, `zip`, `bcmath`, `soap`, `xml`, `mbstring`, `exif`, and `opcache` where upstream images allow it.
+- PECL modules: `redis` and `imagick` with corresponding `docker-php-ext-enable` (plus cleanup of `/tmp/pear`).
+- OPcache tuning (`memory_consumption`, `interned_strings_buffer`, `max_accelerated_files`, `revalidate_freq`, `fast_shutdown`, `enable_cli`).
+- Custom PHP defaults (`memory_limit=256M`, `upload_max_filesize=64M`, `post_max_size=64M`, `max_execution_time=300`).
+- Apache modules enabled: `rewrite`, `headers`, `expires`, `deflate`, `actions` plus running `chown -R www-data:www-data /var/www/html` for better security.
 
 ## Upstream PHP tags
 
