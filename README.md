@@ -39,3 +39,7 @@ services:
 ```
 
 Place your source files (PHP, configs, assets) under `www`, mirror `public` if you use a framework, and commit the folder to your project if needed. Compose will keep them in sync with the container.
+
+## License
+
+All base images reuse the same licensing as the upstream `php:*` variants (PHP License v3.01). See https://www.php.net/license/3_01.txt for the full text.
