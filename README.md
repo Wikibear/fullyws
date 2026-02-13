@@ -2,6 +2,10 @@
 
 Minimal PHP 8.2 / 8.3 / 8.5 Apache base images with GD, Redis, Imagick and tuned PHP defaults. Each version lives under `images/<version>/Dockerfile` so GHCR tags can be rebuilt independently.
 
+## Upstream PHP tags
+
+These builds follow the Debian-based `php:<version>-apache` variants maintained by the Docker Community. For the complete list of supported tags (CLI, Apache, FPM, Alpine, etc.) and their upstream `Dockerfile` links, see the [official Docker Library PHP README](https://github.com/docker-library/docs/blob/master/php/README.md#supported-tags-and-respective-dockerfile-links).
+
 ## Tags pushed to GHCR
 
 - `ghcr.io/wikibear/fullyws:8.2`
@@ -42,4 +46,4 @@ Place your source files (PHP, configs, assets) under `www`, mirror `public` if y
 
 ## License
 
-All base images reuse the same licensing as the upstream `php:*` variants (PHP License v3.01). See https://www.php.net/license/3_01.txt for the full text.
+All base images reuse the same licensing as the upstream `php:*` variants (PHP License v3.01). See https://www.php.net/license/3_01.txt for the full text and the Docker Library [PHP README](https://github.com/docker-library/docs/blob/master/php/README.md#license) for how the project tracks additional dependencies.
