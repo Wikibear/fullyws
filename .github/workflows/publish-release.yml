@@ -6,20 +6,30 @@ on:
       - Docker Build and Push
     types:
       - completed
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to release
+        default: main
 
 jobs:
   publish:
     if: >
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main' &&
-      github.event.workflow_run.run_attempt == 1
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.run_attempt == 1
+      ) || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.event.inputs.branch || github.ref_name || 'main' }}
 
       - name: Gather version list
         id: versions
@@ -29,20 +39,22 @@ jobs:
           printf '%s\n' "$versions" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
-      - name: Short SHA
-        id: sha
-        env:
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      - name: Release metadata
+        id: release_meta
         run: |
-          short_sha=${HEAD_SHA:0:7}
+          head_sha=$(git rev-parse HEAD)
+          short_sha=${head_sha:0:7}
+          head_branch=$(git rev-parse --abbrev-ref HEAD)
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
           echo "short_sha=$short_sha" >> "$GITHUB_OUTPUT"
+          echo "head_branch=$head_branch" >> "$GITHUB_OUTPUT"
 
       - name: Build release notes
         id: release_body
         env:
           VERSIONS: ${{ steps.versions.outputs.versions }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          SHORT_SHA: ${{ steps.sha.outputs.short_sha }}
+          HEAD_SHA: ${{ steps.release_meta.outputs.head_sha }}
+          SHORT_SHA: ${{ steps.release_meta.outputs.short_sha }}
           REPO: ${{ github.repository }}
         run: |
           mapfile -t version_list <<< "$VERSIONS"

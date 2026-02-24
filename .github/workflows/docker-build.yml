@@ -49,3 +49,10 @@ jobs:
           context: ${{ matrix.path }}
           push: true
           tags: ${{ matrix.tags }}
+
+  all-builds-done:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm builds
+        run: echo "All builds completed"
