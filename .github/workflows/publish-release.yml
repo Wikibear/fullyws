@@ -67,9 +67,9 @@ jobs:
           echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub release
-        uses: peter-evans/create-release@v4
+        uses: actions/create-release@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: build-${{ github.event.workflow_run.head_sha }}
           release_name: FullyWS build ${{ steps.sha.outputs.short_sha }}
           body: ${{ steps.release_body.outputs.body }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
