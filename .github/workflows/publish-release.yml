@@ -40,7 +40,7 @@ jobs:
           echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Release metadata
-        id: sha
+        id: release_meta
         run: |
           head_sha=$(git rev-parse HEAD)
           short_sha=${head_sha:0:7}
@@ -54,7 +54,7 @@ jobs:
         env:
           VERSIONS: ${{ steps.versions.outputs.versions }}
           HEAD_SHA: ${{ steps.release_meta.outputs.head_sha }}
-          SHORT_SHA: ${{ steps.sha.outputs.short_sha }}
+          SHORT_SHA: ${{ steps.release_meta.outputs.short_sha }}
           REPO: ${{ github.repository }}
         run: |
           mapfile -t version_list <<< "$VERSIONS"
@@ -82,7 +82,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.event.workflow_run.head_sha }}
-          name: FullyWS build ${{ steps.sha.outputs.short_sha }}
+          name: FullyWS build ${{ steps.release_meta.outputs.short_sha }}
           body: ${{ steps.release_body.outputs.body }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
