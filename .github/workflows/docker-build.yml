@@ -42,17 +42,4 @@ jobs:
       - name: Build und Push (PHP ${{ matrix.version }})
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.path }}
-          push: true
-          tags: |
-            ghcr.io/wikibear/fullyws:${{ matrix.version }}
-            ghcr.io/wikibear/fullyws:${{ env.PHP_VERSION }}
-            ghcr.io/wikibear/fullyws:${{ matrix.version }}-${{ github.sha }}
-            ${{ matrix.version == '8.5' && 'ghcr.io/wikibear/fullyws:latest' || '' }}
-
-  all-builds-done:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Confirm builds
-        run: echo "All builds completed"
+          context: ${{
