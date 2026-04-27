@@ -10,7 +10,8 @@ updates:
       - "docker"
     ignore:
       - dependency-name: "php"
-        versions: ["8.3.x", "8.4.x", "8.5.x"]
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: "docker"
     directory: "/images/8.3"
     schedule:
@@ -21,7 +22,8 @@ updates:
       - "docker"
     ignore:
       - dependency-name: "php"
-        versions: ["8.3.x", "8.4.x", "8.5.x"]
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: "docker"
     directory: "/images/8.5"
     schedule:
@@ -32,4 +34,4 @@ updates:
       - "docker"
     ignore:
       - dependency-name: "php"
-        versions: ["8.3.x", "8.4.x", "8.5.x"]
+        update-types: ["version-update:semver-major"]
