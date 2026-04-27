@@ -12,25 +12,16 @@ jobs:
     permissions:
       contents: read
       packages: write
+
     strategy:
       matrix:
         include:
           - version: 8.2
             path: images/8.2
-            tags: |
-              ghcr.io/wikibear/fullyws:8.2
-              ghcr.io/wikibear/fullyws:8.2-${{ github.sha }}
           - version: 8.3
             path: images/8.3
-            tags: |
-              ghcr.io/wikibear/fullyws:8.3
-              ghcr.io/wikibear/fullyws:8.3-${{ github.sha }}
           - version: 8.5
             path: images/8.5
-            tags: |
-              ghcr.io/wikibear/fullyws:8.5
-              ghcr.io/wikibear/fullyws:8.5-${{ github.sha }}
-              ghcr.io/wikibear/fullyws:latest
 
     steps:
       - name: Checkout Code
@@ -43,12 +34,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract PHP version
+        run: |
+          PHP_VERSION=$(grep FROM ${{ matrix.path }}/Dockerfile | cut -d: -f2 | cut -d- -f1)
+          echo "PHP_VERSION=$PHP_VERSION" >> $GITHUB_ENV
+
       - name: Build und Push (PHP ${{ matrix.version }})
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.path }}
           push: true
-          tags: ${{ matrix.tags }}
+          tags: |
+            ghcr.io/wikibear/fullyws:${{ matrix.version }}
+            ghcr.io/wikibear/fullyws:${{ env.PHP_VERSION }}
+            ghcr.io/wikibear/fullyws:${{ matrix.version }}-${{ github.sha }}
+            ${{ matrix.version == '8.5' && 'ghcr.io/wikibear/fullyws:latest' || '' }}
 
   all-builds-done:
     needs: build
