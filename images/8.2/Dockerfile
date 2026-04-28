@@ -1,4 +1,4 @@
-FROM php:8.2.30-apache
+FROM php:8.5.5-apache
 
 # System-Pakete für PHP-Extensions
 RUN apt-get update && apt-get install -y \
