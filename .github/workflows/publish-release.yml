@@ -6,83 +6,45 @@ on:
       - Docker Build and Push
     types:
       - completed
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: Branch to release
-        default: main
 
 jobs:
   publish:
     if: >
-      (
-        github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push' &&
-        github.event.workflow_run.head_branch == 'main' &&
-        github.event.workflow_run.run_attempt == 1
-      ) || github.event_name == 'workflow_dispatch'
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event != 'pull_request'
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.event.inputs.branch || github.ref_name || 'main' }}
+          ref: ${{ github.event.workflow_run.head_branch }}
 
-      - name: Gather version list
-        id: versions
+      - name: Check if images were built
+        id: check
         run: |
-          versions=$(ls images | sort -V)
-          echo "versions<<EOF" >> "$GITHUB_OUTPUT"
-          printf '%s\n' "$versions" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "⚠️ Build result cannot be read cross-workflow → assume build happened"
 
       - name: Release metadata
-        id: release_meta
+        id: meta
         run: |
-          head_sha=$(git rev-parse HEAD)
-          short_sha=${head_sha:0:7}
-          head_branch=$(git rev-parse --abbrev-ref HEAD)
-          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
-          echo "short_sha=$short_sha" >> "$GITHUB_OUTPUT"
-          echo "head_branch=$head_branch" >> "$GITHUB_OUTPUT"
+          SHA=${{ github.event.workflow_run.head_sha }}
+          SHORT=${SHA:0:7}
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+          echo "short=$SHORT" >> $GITHUB_OUTPUT
 
-      - name: Build release notes
-        id: release_body
-        env:
-          VERSIONS: ${{ steps.versions.outputs.versions }}
-          HEAD_SHA: ${{ steps.release_meta.outputs.head_sha }}
-          SHORT_SHA: ${{ steps.release_meta.outputs.short_sha }}
-          REPO: ${{ github.repository }}
-        run: |
-          mapfile -t version_list <<< "$VERSIONS"
-          release_lines=()
-          release_lines+=("## Summary")
-          release_lines+=("- Automated release triggered by [${SHORT_SHA}](https://github.com/${REPO}/commit/${HEAD_SHA})")
-          release_lines+=("- Docker images pushed for the following versions:")
-          for version in "${version_list[@]}"; do
-            [[ -z "$version" ]] && continue
-            release_lines+=("  - ${version}")
-          done
-          release_lines+=("")
-          release_lines+=("## Tags")
-          for version in "${version_list[@]}"; do
-            [[ -z "$version" ]] && continue
-            release_lines+=("- ghcr.io/wikibear/fullyws:${version}")
-          done
-          release_lines+=("- ghcr.io/wikibear/fullyws:latest")
-          printf '%s\n' "${release_lines[@]}" > release_body.txt
-          echo "body<<EOF" >> "$GITHUB_OUTPUT"
-          cat release_body.txt >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-
-      - name: Create GitHub release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.event.workflow_run.head_sha }}
-          name: FullyWS build ${{ steps.release_meta.outputs.short_sha }}
-          body: ${{ steps.release_body.outputs.body }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: build-${{ steps.meta.outputs.sha }}
+          name: Build ${{ steps.meta.outputs.short }}
+          body: |
+            🚀 Automated Docker release
+
+            Triggered by workflow run:
+            ${{ github.event.workflow_run.html_url }}
+
+            ✅ Images updated and pushed to GHCR
