@@ -9,8 +9,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # wichtig für Releases!
+      contents: write
       packages: write
+      security-events: write
 
     strategy:
       matrix:
@@ -21,6 +22,7 @@ jobs:
             path: images/8.3
           - version: 8.5
             path: images/8.5
+            latest: true
 
     steps:
       - uses: actions/checkout@v4
@@ -34,17 +36,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 🔍 Base Image + Version holen
-      - name: Extract base + version
+      # 🔍 Base Image + Version
+      - name: Extract metadata
         id: meta
         run: |
           BASE=$(grep FROM ${{ matrix.path }}/Dockerfile | awk '{print $2}')
           VERSION=$(echo $BASE | cut -d: -f2 | cut -d- -f1)
+          MAJOR=$(echo $VERSION | cut -d. -f1,2)
 
           echo "base=$BASE" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "major=$MAJOR" >> $GITHUB_OUTPUT
 
-      # 🔍 Digest prüfen
+      # 🔍 Digest holen
       - name: Get digest
         id: digest
         run: |
@@ -59,7 +63,7 @@ jobs:
           path: digest-${{ matrix.version }}
           key: digest-${{ matrix.version }}-${{ steps.digest.outputs.digest }}
 
-      # 🧠 Check Änderung
+      # 🧠 Entscheidung
       - name: Should build?
         id: changed
         run: |
@@ -77,26 +81,54 @@ jobs:
           context: ${{ matrix.path }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/php-${{ matrix.version }}:latest
-            ghcr.io/${{ github.repository }}/php-${{ matrix.version }}:${{ steps.meta.outputs.version }}
+            ghcr.io/${{ github.repository }}/php-${{ steps.meta.outputs.major }}:latest
+            ghcr.io/${{ github.repository }}/php-${{ steps.meta.outputs.major }}:${{ steps.meta.outputs.version }}
+            ${{ matrix.latest && format('ghcr.io/{0}/php:latest', github.repository) || '' }}
 
-      # 📝 Release Notes
+      # 🔐 Security Scan (Trivy)
+      - name: Scan Image
+        if: steps.changed.outputs.build == 'true'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/${{ github.repository }}/php-${{ steps.meta.outputs.major }}:${{ steps.meta.outputs.version }}
+          format: table
+          exit-code: 0
+
+      # 📝 PHP Changelog holen
+      - name: Fetch PHP changelog
+        id: changelog
+        if: steps.changed.outputs.build == 'true'
+        run: |
+          VERSION=${{ steps.meta.outputs.version }}
+          NOTES=$(curl -s https://www.php.net/ChangeLog-$VERSION.php | head -n 40 || echo "No changelog found")
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      # 📝 Release
       - name: Create Release
         if: steps.changed.outputs.build == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: php-${{ matrix.version }}-${{ steps.meta.outputs.version }}
-          name: PHP ${{ matrix.version }} → ${{ steps.meta.outputs.version }}
+          tag_name: php-${{ steps.meta.outputs.major }}-${{ steps.meta.outputs.version }}
+          name: PHP ${{ steps.meta.outputs.major }} → ${{ steps.meta.outputs.version }}
           body: |
-            🚀 New PHP base image detected
+            🚀 Automated Docker rebuild triggered
 
-            Base image: `${{ steps.meta.outputs.base }}`
-            Version: `${{ steps.meta.outputs.version }}`
+            ## 📦 Base Image
+            `${{ steps.meta.outputs.base }}`
 
-            Docker image:
-            ghcr.io/${{ github.repository }}/php-${{ matrix.version }}:${{ steps.meta.outputs.version }}
+            ## 🐳 Docker Tags
+            - ghcr.io/${{ github.repository }}/php-${{ steps.meta.outputs.major }}:${{ steps.meta.outputs.version }}
+            - ghcr.io/${{ github.repository }}/php-${{ steps.meta.outputs.major }}:latest
 
-      # 💾 Save digest
+            ## 🔐 Security Scan
+            ✅ Trivy scan completed
+
+            ## 📜 PHP Changes
+            ${{ steps.changelog.outputs.notes }}
+
+      # 💾 Save Digest
       - name: Save digest
         if: steps.changed.outputs.build == 'true'
         run: |
