@@ -1,4 +1,4 @@
-name: Docker Build and Release
+name: Docker Build and Push
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
       security-events: write
 
@@ -26,12 +26,14 @@ jobs:
             path: images/8.5
             latest: true
 
+    outputs:
+      built: ${{ steps.set-output.outputs.built }}
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: docker/setup-buildx-action@v3
 
-      # ✅ FIX: Repo lowercase
       - name: Normalize repo name
         id: repo
         run: |
@@ -45,7 +47,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 🔍 Base Image + Version
       - name: Extract metadata
         id: meta
         run: |
@@ -57,14 +58,12 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "major=$MAJOR" >> $GITHUB_OUTPUT
 
-      # 🔍 Digest holen
       - name: Get digest
         id: digest
         run: |
           DIGEST=$(docker buildx imagetools inspect ${{ steps.meta.outputs.base }} --format '{{json .Manifest.Digest}}' | tr -d '"')
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
-      # 💾 Cache
       - name: Cache digest
         id: cache
         uses: actions/cache@v4
@@ -72,7 +71,6 @@ jobs:
           path: digest-${{ matrix.version }}
           key: digest-${{ matrix.version }}-${{ steps.digest.outputs.digest }}
 
-      # 🧠 Entscheidung
       - name: Should build?
         id: changed
         run: |
@@ -82,7 +80,6 @@ jobs:
             echo "build=true" >> $GITHUB_OUTPUT
           fi
 
-      # 🏗️ Build + Push
       - name: Build and Push
         if: steps.changed.outputs.build == 'true'
         uses: docker/build-push-action@v5
@@ -94,7 +91,6 @@ jobs:
             ghcr.io/${{ steps.repo.outputs.repo }}/php-${{ steps.meta.outputs.major }}:${{ steps.meta.outputs.version }}
             ${{ matrix.latest && format('ghcr.io/{0}/php:latest', steps.repo.outputs.repo) || '' }}
 
-      # 🔐 Security Scan (Trivy)
       - name: Scan Image
         if: steps.changed.outputs.build == 'true'
         uses: aquasecurity/trivy-action@master
@@ -103,42 +99,16 @@ jobs:
           format: table
           exit-code: 0
 
-      # 📝 PHP Changelog holen
-      - name: Fetch PHP changelog
-        id: changelog
-        if: steps.changed.outputs.build == 'true'
-        run: |
-          VERSION=${{ steps.meta.outputs.version }}
-          NOTES=$(curl -s https://www.php.net/ChangeLog-$VERSION.php | head -n 40 || echo "No changelog found")
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      # 📝 Release
-      - name: Create Release
-        if: steps.changed.outputs.build == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: php-${{ steps.meta.outputs.major }}-${{ steps.meta.outputs.version }}
-          name: PHP ${{ steps.meta.outputs.major }} → ${{ steps.meta.outputs.version }}
-          body: |
-            🚀 Automated Docker rebuild triggered
-
-            ## 📦 Base Image
-            `${{ steps.meta.outputs.base }}`
-
-            ## 🐳 Docker Tags
-            - ghcr.io/${{ steps.repo.outputs.repo }}/php-${{ steps.meta.outputs.major }}:${{ steps.meta.outputs.version }}
-            - ghcr.io/${{ steps.repo.outputs.repo }}/php-${{ steps.meta.outputs.major }}:latest
-
-            ## 🔐 Security Scan
-            ✅ Trivy scan completed
-
-            ## 📜 PHP Changes
-            ${{ steps.changelog.outputs.notes }}
-
-      # 💾 Save Digest
       - name: Save digest
         if: steps.changed.outputs.build == 'true'
         run: |
           echo "${{ steps.digest.outputs.digest }}" > digest-${{ matrix.version }}
+
+      - name: Track builds
+        id: set-output
+        run: |
+          if [ "${{ steps.changed.outputs.build }}" == "true" ]; then
+            echo "built=true" >> $GITHUB_OUTPUT
+          else
+            echo "built=false" >> $GITHUB_OUTPUT
+          fi
