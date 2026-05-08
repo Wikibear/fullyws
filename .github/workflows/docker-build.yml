@@ -87,9 +87,10 @@ jobs:
           context: ${{ matrix.path }}
           push: true
           tags: |
-            ghcr.io/${{ steps.repo.outputs.repo }}/php-${{ steps.meta.outputs.major }}:latest
-            ghcr.io/${{ steps.repo.outputs.repo }}/php-${{ steps.meta.outputs.major }}:${{ steps.meta.outputs.version }}
-            ${{ matrix.latest && format('ghcr.io/{0}/php:latest', steps.repo.outputs.repo) || '' }}
+            ghcr.io/${{ steps.repo.outputs.repo }}/fullyws:${{ steps.meta.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.repo }}/fullyws:${{ steps.meta.outputs.version }}-${{ github.sha }}
+            ghcr.io/${{ steps.repo.outputs.repo }}/fullyws:${{ github.sha }}
+            ${{ matrix.latest && format('ghcr.io/{0}/fullyws:latest', steps.repo.outputs.repo) || '' }}
 
       - name: Scan Image
         if: steps.changed.outputs.build == 'true'
