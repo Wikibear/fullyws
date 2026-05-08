@@ -96,7 +96,7 @@ jobs:
         if: steps.changed.outputs.build == 'true'
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ghcr.io/${{ steps.repo.outputs.repo }}/php-${{ steps.meta.outputs.major }}:${{ steps.meta.outputs.version }}
+          image-ref: ghcr.io/${{ steps.repo.outputs.repo }}/fullyws:${{ steps.meta.outputs.version }}
           format: table
           exit-code: 0
 
