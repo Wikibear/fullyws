@@ -85,6 +85,13 @@ jobs:
             echo "build=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Determine PHP version
+        if: steps.changed.outputs.build == 'true'
+        id: php
+        run: |
+          PHP_VERSION=$(docker run --rm ${{ steps.meta.outputs.base }} php -r 'echo PHP_VERSION;')
+          echo "php_version=$PHP_VERSION" >> $GITHUB_OUTPUT
+
       - name: Build and Push
         if: steps.changed.outputs.build == 'true'
         uses: docker/build-push-action@v5
@@ -92,8 +99,10 @@ jobs:
           context: ${{ matrix.path }}
           push: true
           tags: |
-            ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.meta.outputs.version }}
-            ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.meta.outputs.version }}-${{ github.sha }}
+            ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.php.outputs.php_version }}
+            ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.meta.outputs.major }}
+            ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.php.outputs.php_version }}-${{ github.sha }}
+            ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.meta.outputs.major }}-${{ github.sha }}
             ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ github.sha }}
             ${{ matrix.latest && format('ghcr.io/{0}/{1}:latest', steps.repo.outputs.owner, steps.repo.outputs.image) || '' }}
 
@@ -101,7 +110,7 @@ jobs:
         if: steps.changed.outputs.build == 'true'
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.meta.outputs.version }}
+          image-ref: ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.php.outputs.php_version }}
           format: table
           exit-code: 0
 

@@ -37,9 +37,9 @@ These builds follow the Debian-based `php:<version>-apache` variants maintained 
 
 ## Tags pushed to GHCR
 
-- `ghcr.io/wikibear/fullyws:8.2`
-- `ghcr.io/wikibear/fullyws:8.3`
-- `ghcr.io/wikibear/fullyws:8.5` (also `latest`)
+- `ghcr.io/wikibear/fullyws:8.2.<patch>` (also `:8.2` for the latest 8.2 build)
+- `ghcr.io/wikibear/fullyws:8.3.<patch>` (also `:8.3` for the latest 8.3 build)
+- `ghcr.io/wikibear/fullyws:8.5.<patch>` (also `:8.5` and `:latest`)
 - `ghcr.io/wikibear/fullyws:<sha>` per build for traceability
 
 ## Local build example
