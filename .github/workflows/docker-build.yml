@@ -18,6 +18,8 @@ jobs:
     strategy:
       matrix:
         include:
+          - version: 7.4
+            path: images/7.4
           - version: 8.2
             path: images/8.2
           - version: 8.3
