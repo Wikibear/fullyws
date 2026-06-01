@@ -1,6 +1,18 @@
 version: 2
 updates:
   - package-ecosystem: "docker"
+    directory: "/images/7.4"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+    ignore:
+      - dependency-name: "php"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  - package-ecosystem: "docker"
     directory: "/images/8.2"
     schedule:
       interval: "daily"
