@@ -18,8 +18,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.4
-            path: images/7.4
+          - version: 8.1
+            path: images/8.1
           - version: 8.2
             path: images/8.2
           - version: 8.3
@@ -57,13 +57,8 @@ jobs:
       - name: Extract metadata
         id: meta
         run: |
-          BASE=$(grep FROM ${{ matrix.path }}/Dockerfile | awk '{print $2}')
-          VERSION=$(echo $BASE | cut -d: -f2 | cut -d- -f1)
-          MAJOR=$(echo $VERSION | cut -d. -f1,2)
-
+          BASE=$(grep -m1 '^FROM' ${{ matrix.path }}/Dockerfile | awk '{print $2}')
           echo "base=$BASE" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "major=$MAJOR" >> $GITHUB_OUTPUT
 
       - name: Get digest
         id: digest
@@ -92,19 +87,21 @@ jobs:
         id: php
         run: |
           PHP_VERSION=$(docker run --rm ${{ steps.meta.outputs.base }} php -r 'echo PHP_VERSION;')
+          MAJOR=$(echo $PHP_VERSION | cut -d. -f1,2)
           echo "php_version=$PHP_VERSION" >> $GITHUB_OUTPUT
+          echo "major=$MAJOR" >> $GITHUB_OUTPUT
 
       - name: Build and Push
         if: steps.changed.outputs.build == 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.path }}
           push: true
           tags: |
             ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.php.outputs.php_version }}
-            ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.meta.outputs.major }}
+            ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.php.outputs.major }}
             ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.php.outputs.php_version }}-${{ github.sha }}
-            ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.meta.outputs.major }}-${{ github.sha }}
+            ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ steps.php.outputs.major }}-${{ github.sha }}
             ghcr.io/${{ steps.repo.outputs.owner }}/${{ steps.repo.outputs.image }}:${{ github.sha }}
             ${{ matrix.latest && format('ghcr.io/{0}/{1}:latest', steps.repo.outputs.owner, steps.repo.outputs.image) || '' }}
 
