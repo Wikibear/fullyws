@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: "docker"
-    directory: "/images/7.4"
+    directory: "/images/8.1"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 5
